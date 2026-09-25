@@ -15,3 +15,7 @@ def index():
         eventos.append(evento)
         return redirect("/")
     return render_template("index.html", eventos=eventos)
+
+@evento_bp.route("/eventos")
+def listar_eventos_texto():
+    return "Lista de eventos aqui."
