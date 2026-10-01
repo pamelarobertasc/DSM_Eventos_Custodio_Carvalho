@@ -212,3 +212,152 @@ O uso do ORM no projeto proporciona:
 * [x] `EventoDAO` criado
 * [x] Controller integrado ao `EventoDAO`
 * [x] Comparação entre SQL direto e ORM documentada
+
+## Alterações realizadas — Etapa 2
+
+Nesta etapa, o projeto foi atualizado para utilizar persistência de dados com banco de dados SQLite e mapeamento objeto-relacional (ORM) utilizando Flask-SQLAlchemy.
+
+### 1. Instalação do ORM
+
+Foi adicionada a biblioteca **Flask-SQLAlchemy** ao projeto e o arquivo `requirements.txt` foi atualizado para registrar a nova dependência.
+
+### 2. Conversão da entidade Evento para ORM
+
+A classe `Evento`, anteriormente utilizada apenas como uma classe Python, foi transformada em um modelo ORM.
+
+O modelo passou a utilizar:
+
+* `db.Model`;
+* `db.Column`;
+* chave primária `id`;
+* campos `nome`, `data` e `local`.
+
+### 3. Configuração do banco de dados
+
+Foi criada a configuração do SQLAlchemy na aplicação Flask, utilizando o banco de dados SQLite.
+
+Também foi criado o arquivo `extensions.py`, responsável por disponibilizar a instância do SQLAlchemy:
+
+```python
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+```
+
+A criação das tabelas é realizada através de:
+
+```python
+with app.app_context():
+    db.create_all()
+```
+
+### 4. Persistência dos eventos
+
+Os eventos passaram a ser armazenados no banco de dados utilizando o ORM.
+
+Para inserir um evento são utilizados:
+
+```python
+db.session.add(evento)
+db.session.commit()
+```
+
+Dessa forma, os dados permanecem armazenados mesmo após o encerramento da aplicação.
+
+### 5. Consultas utilizando ORM
+
+Foram realizados testes de consultas utilizando os recursos do SQLAlchemy:
+
+```python
+Evento.query.all()
+```
+
+Para consultar todos os eventos.
+
+```python
+Evento.query.get(1)
+```
+
+Para consultar um evento pelo seu identificador.
+
+```python
+Evento.query.filter_by(local="Lab 3").all()
+```
+
+Para consultar eventos filtrando pelo local.
+
+### 6. Criação do EventoDAO
+
+Foi criada a pasta `DAO` e o arquivo `evento_dao.py`.
+
+O `EventoDAO` possui os métodos:
+
+```python
+salvar(evento)
+```
+
+Responsável por adicionar e confirmar o evento no banco de dados.
+
+```python
+listar()
+```
+
+Responsável por consultar e retornar os eventos cadastrados.
+
+### 7. Integração do Controller com o DAO
+
+O `evento_controller.py` foi atualizado para utilizar o `EventoDAO`.
+
+O cadastro passou a utilizar:
+
+```python
+EventoDAO.salvar(evento)
+```
+
+E a listagem passou a utilizar:
+
+```python
+eventos = EventoDAO.listar()
+```
+
+Com isso, o Controller deixou de utilizar a lista em memória como fonte principal dos eventos.
+
+O fluxo passou a ser:
+
+```text
+Usuário
+   ↓
+Controller
+   ↓
+EventoDAO
+   ↓
+Flask-SQLAlchemy
+   ↓
+SQLite
+```
+
+### 8. Documentação
+
+O `README.md` foi atualizado para documentar:
+
+* configuração do ORM;
+* persistência dos dados;
+* consultas utilizando SQLAlchemy;
+* funcionamento do DAO;
+* integração entre Controller e DAO;
+* comparação entre SQL direto e ORM.
+
+## Status atual
+
+* [x] Projeto organizado em MVC
+* [x] Flask-SQLAlchemy instalado
+* [x] `requirements.txt` atualizado
+* [x] Modelo `Evento` convertido para ORM
+* [x] Banco SQLite configurado
+* [x] Tabela criada com `db.create_all()`
+* [x] Persistência utilizando ORM
+* [x] Consultas com `all()`, `get()` e `filter_by()`
+* [x] `EventoDAO` criado
+* [x] Controller integrado ao DAO
+* [x] README atualizado
+
