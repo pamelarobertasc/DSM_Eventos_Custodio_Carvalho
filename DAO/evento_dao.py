@@ -1,5 +1,5 @@
 from extensions import db
-from Models.evento import Evento
+from models.evento import Evento
 
 
 class EventoDAO:
