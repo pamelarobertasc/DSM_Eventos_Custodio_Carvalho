@@ -1,33 +1,35 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Editar evento</title>
-</head>
-<body>
+<!-- Reutiliza a estrutura e as mensagens da base. -->
+{% extends "base.html" %}
+
+{% block titulo %}Editar evento{% endblock %}
+
+{% block conteudo %}
     <h1>Editar evento</h1>
 
-    <!-- Mostra o erro de validação recebido do controller. -->
+    <!-- Exibe o erro de validação recebido do controller. -->
     {% if erro %}
         <p role="alert">{{ erro }}</p>
     {% endif %}
 
-    <!-- Envia as alterações para a rota do evento que estamos editando. -->
+    <!-- Envia as alterações para a rota do evento escolhido. -->
     <form method="post" action="{{ url_for('evento.editar', id=evento.id) }}">
 
-        <!-- No primeiro acesso, mostra os valores salvos no banco.
-             Após um erro, mantém os valores que a pessoa digitou. -->
+        <!-- O servidor confere o token antes de aceitar o envio. -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Mostra o nome salvo ou mantém o digitado após um erro. -->
         <label for="nome">Nome do evento</label>
         <input id="nome" name="nome" maxlength="120" value="{{ valores.get('nome', evento.nome) }}" required>
 
+        <!-- Mostra a data atual do evento. -->
         <label for="data">Data</label>
         <input id="data" name="data" type="date" value="{{ valores.get('data', evento.data) }}" required>
 
+        <!-- Usa texto vazio quando o evento não possui local. -->
         <label for="local">Local</label>
         <input id="local" name="local" maxlength="120" value="{{ valores.get('local', evento.local or '') }}">
 
-        <!-- O teste is not none permite mostrar zero como valor válido. -->
+        <!-- Preserva zero como uma quantidade válida de vagas. -->
         <label for="vagas">Quantidade de vagas</label>
         <input id="vagas" name="vagas" type="number" min="0" step="1" value="{{ valores.get('vagas', evento.vagas if evento.vagas is not none else '') }}">
 
@@ -36,5 +38,4 @@
 
     <!-- Retorna à lista sem enviar o formulário. -->
     <a href="{{ url_for('evento.index') }}">Voltar à lista</a>
-</body>
-</html>
+{% endblock %}

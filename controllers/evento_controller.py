@@ -1,13 +1,17 @@
-# Permite verificar se a data recebida é válida.
+# Permite validar a data recebida.
 from datetime import date
 
-# Importa as ferramentas usadas nas rotas.
+# Importa as ferramentas usadas pelo controller.
 from flask import (
     Blueprint,
     abort,
+    current_app,
+    flash,
+    g,
     redirect,
     render_template,
     request,
+    session,
     url_for,
 )
 
@@ -16,8 +20,29 @@ from dao.evento_dao import EventoDAO
 from models.evento import Evento
 
 
-# Cria o grupo de rotas dos eventos.
+# Cria o grupo de rotas de eventos.
 evento_bp = Blueprint("evento", __name__)
+
+
+@evento_bp.before_request
+def exigir_login():
+    # g.usuario é preenchido no app.py antes de cada requisição.
+    # Se não houver usuário autenticado, abre o login.
+    if g.usuario is None:
+        return redirect(url_for("auth.login"))
+
+    # Conta as visitas somente ao abrir a listagem por GET.
+    if (
+        request.method == "GET"
+        and request.endpoint in ("evento.index", "evento.eventos")
+    ):
+        # Contador individual, associado à sessão do navegador.
+        session["visitas"] = session.get("visitas", 0) + 1
+
+        # Contador compartilhado durante a execução deste processo.
+        current_app.config["ACESSOS"] = (
+            current_app.config.get("ACESSOS", 0) + 1
+        )
 
 
 def ler_campos():
@@ -30,16 +55,17 @@ def ler_campos():
     # Confere o nome obrigatório e o tamanho dos textos.
     if not nome or len(nome) > 120 or len(local) > 120:
         raise ValueError(
-            "Informe o nome e use até 120 caracteres no nome e no local."
+            "Informe o nome e use até 120 caracteres "
+            "no nome e no local."
         )
 
-    # Verifica a data e padroniza para ano-mês-dia.
+    # Valida a data e padroniza para ano-mês-dia.
     try:
         data = date.fromisoformat(data).isoformat()
     except ValueError:
         raise ValueError("Informe uma data válida.")
 
-    # Converte vagas para inteiro. Campo vazio vira None.
+    # Campo vazio vira None. Caso preenchido, deve ser inteiro.
     try:
         vagas = int(vagas) if vagas else None
     except ValueError:
@@ -47,9 +73,11 @@ def ler_campos():
 
     # Impede quantidade negativa de vagas.
     if vagas is not None and vagas < 0:
-        raise ValueError("Vagas deve ser zero ou um número positivo.")
+        raise ValueError(
+            "Vagas deve ser zero ou um número positivo."
+        )
 
-    # Entrega os campos validados em um dicionário.
+    # Entrega os valores validados ao cadastro ou à edição.
     return {
         "nome": nome,
         "data": data,
@@ -59,10 +87,10 @@ def ler_campos():
 
 
 def mostrar_formulario(erro=None, evento=None, editar=False):
-    # Escolhe a página de cadastro ou de edição.
+    # Escolhe a página de cadastro ou edição.
     pagina = "editar.html" if editar else "index.html"
 
-    # Entrega ao HTML os dados necessários para montar a página.
+    # Entrega os dados necessários ao template.
     return render_template(
         pagina,
         evento=evento,
@@ -74,24 +102,31 @@ def mostrar_formulario(erro=None, evento=None, editar=False):
 
 @evento_bp.route("/", methods=["GET", "POST"])
 def index():
-    # POST acontece quando o formulário de cadastro é enviado.
+    # POST acontece quando o cadastro é enviado.
     if request.method == "POST":
         try:
             campos = ler_campos()
+
         except ValueError as erro:
-            # Mostra o erro e mantém os valores digitados.
+            # Exibe o erro mantendo os valores digitados.
             return mostrar_formulario(str(erro)), 400
 
-        # Os ** distribuem o dicionário pelos atributos do Evento.
+        # Cria o objeto com os dados validados.
         evento = Evento(**campos)
 
         # Grava o evento no banco.
         EventoDAO.salvar(evento)
 
-        # Após cadastrar, pede ao navegador para abrir a lista com GET.
-        return redirect(url_for("evento.index"), code=303)
+        # Guarda a mensagem que aparecerá após o redirecionamento.
+        flash("Evento cadastrado!", "sucesso")
 
-    # No GET, mostra a lista e o formulário.
+        # Pede ao navegador para abrir a lista com GET.
+        return redirect(
+            url_for("evento.index"),
+            code=303,
+        )
+
+    # GET exibe a listagem e o formulário.
     return mostrar_formulario()
 
 
@@ -103,45 +138,67 @@ def eventos():
 
 @evento_bp.route("/editar/<int:id>", methods=["GET", "POST"])
 def editar(id):
-    # Busca o evento indicado pelo ID da URL.
+    # Busca o registro indicado pelo ID da URL.
     evento = EventoDAO.buscar_por_id(id)
 
-    # Responde 404 quando o evento não existe.
+    # Encerra a requisição se o evento não existir.
     if evento is None:
         abort(404)
 
-    # POST recebe os dados que a pessoa alterou.
+    # POST recebe os novos valores do formulário.
     if request.method == "POST":
         try:
             campos = ler_campos()
+
         except ValueError as erro:
+            # Mostra o erro no formulário de edição.
             return mostrar_formulario(
                 erro=str(erro),
                 evento=evento,
                 editar=True,
             ), 400
 
-        # Atualiza o registro com os campos validados.
+        # Atualiza os dados no banco.
         EventoDAO.atualizar(evento, **campos)
 
-        # Volta à lista depois de salvar.
-        return redirect(url_for("evento.index"), code=303)
+        # Prepara o aviso de sucesso.
+        flash("Evento atualizado!", "sucesso")
 
-    # No GET, abre o formulário preenchido com o evento.
-    return mostrar_formulario(evento=evento, editar=True)
+        # Volta para a listagem.
+        return redirect(
+            url_for("evento.index"),
+            code=303,
+        )
+
+    # GET abre o formulário com os dados atuais.
+    return mostrar_formulario(
+        evento=evento,
+        editar=True,
+    )
 
 
 @evento_bp.post("/excluir/<int:id>")
 def excluir(id):
-    # Busca o evento escolhido para exclusão.
+    # Confere a permissão no servidor.
+    # Somente uma conta com perfil admin pode excluir.
+    if g.usuario.perfil != "admin":
+        abort(403)
+
+    # Busca o evento escolhido.
     evento = EventoDAO.buscar_por_id(id)
 
-    # Responde 404 se esse ID não existir.
+    # Responde 404 quando o ID não existe.
     if evento is None:
         abort(404)
 
-    # Exclui o evento e confirma a operação no banco.
+    # Remove o evento do banco.
     EventoDAO.excluir(evento)
 
-    # Volta à lista atualizada.
-    return redirect(url_for("evento.index"), code=303)
+    # Prepara a mensagem para a próxima página.
+    flash("Evento excluído!", "sucesso")
+
+    # Abre a lista atualizada.
+    return redirect(
+        url_for("evento.index"),
+        code=303,
+    )

@@ -1,0 +1,52 @@
+<!-- Reutiliza a estrutura e as mensagens do template base. -->
+{% extends "base.html" %}
+
+<!-- Define o título da aba do navegador. -->
+{% block titulo %}
+    {{ "Criar conta" if cadastro else "Entrar" }}
+{% endblock %}
+
+<!-- Coloca o formulário dentro do bloco principal da base. -->
+{% block conteudo %}
+
+    <h1>{{ "Criar conta" if cadastro else "Entrar" }}</h1>
+
+    <!-- Envia para a rota atual: /cadastro ou /login. -->
+    <form method="post">
+
+        <!-- Token que o servidor confere para aceitar o envio. -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- O nome aparece somente no cadastro. -->
+        {% if cadastro %}
+            <label for="nome">Nome completo</label>
+            <input id="nome"  name="nome" type="text" maxlength="120" autocomplete="name"  value="{{ valores.get('nome', '') }}" required>
+        {% endif %}
+
+        <!-- Mantém o e-mail digitado caso o envio apresente erro. -->
+        <label for="email">E-mail</label>
+        <input id="email" name="email"  type="email" maxlength="120" autocomplete="username" value="{{ valores.get('email', '') }}" required>
+
+        <!-- A senha fica oculta durante a digitação.
+             No cadastro, o navegador exige pelo menos 8 caracteres. -->
+        <label for="senha">Senha</label>
+        <input id="senha" name="senha" type="password" maxlength="128" {% if cadastro %}minlength="8"{% endif %} autocomplete="{{ 'new-password' if cadastro else 'current-password' }}" required>
+
+        {% if cadastro %}
+            <p>Use uma senha entre 8 e 128 caracteres.</p>
+        {% endif %}
+
+        <!-- O texto do botão acompanha a função da página. -->
+        <button type="submit">
+            {{ "Cadastrar" if cadastro else "Entrar" }}
+        </button>
+    </form>
+
+    <!-- Permite alternar entre cadastro e login. -->
+    {% if cadastro %}
+        <a href="{{ url_for('auth.login') }}">Já tenho conta</a>
+    {% else %}
+        <a href="{{ url_for('auth.cadastro') }}">Criar conta</a>
+    {% endif %}
+
+{% endblock %}

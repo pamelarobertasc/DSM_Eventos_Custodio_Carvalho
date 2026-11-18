@@ -1,22 +1,26 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Eventos Acadêmicos</title>
-</head>
-<body>
+<!-- Reutiliza o cabeçalho, o tema e as mensagens da base. -->
+{% extends "base.html" %}
+
+{% block titulo %}Eventos Acadêmicos{% endblock %}
+
+{% block conteudo %}
     <h1>Eventos Acadêmicos</h1>
 
-    <!-- Exibe uma mensagem quando o controller encontra dados inválidos. -->
+    <!-- O JavaScript habilitará este botão. -->
+    <button type="button" id="alternar" hidden>Mostrar ou ocultar formulário</button>
+
+    <!-- Exibe erros de validação enviados pelo controller. -->
     {% if erro %}
         <p role="alert">{{ erro }}</p>
     {% endif %}
 
-    <!-- Envia o cadastro por POST para a função index do controller. -->
-    <form method="post" action="{{ url_for('evento.index') }}">
+    <!-- Envia os dados para a rota de cadastro. -->
+    <form id="cadastro-evento" method="post" action="{{ url_for('evento.index') }}">
 
-        <!-- valores mantém o texto digitado caso o cadastro dê erro. -->
+        <!-- O servidor confere o token antes de aceitar o envio. -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Mantém o nome digitado caso o cadastro apresente erro. -->
         <label for="nome">Nome do evento</label>
         <input id="nome" name="nome" maxlength="120" value="{{ valores.get('nome', '') }}" required>
 
@@ -27,7 +31,7 @@
         <label for="local">Local</label>
         <input id="local" name="local" maxlength="120" value="{{ valores.get('local', '') }}">
 
-        <!-- Vagas é opcional e aceita números inteiros a partir de zero. -->
+        <!-- Vagas aceita números inteiros a partir de zero. -->
         <label for="vagas">Quantidade de vagas</label>
         <input id="vagas" name="vagas" type="number" min="0" step="1" value="{{ valores.get('vagas', '') }}">
 
@@ -36,32 +40,41 @@
 
     <h2>Eventos cadastrados</h2>
 
-    <!-- Só monta a lista quando existem eventos no banco. -->
+    <!-- Mostra a lista quando existem registros. -->
     {% if eventos %}
+        <p>Total de eventos: {{ eventos|length }}</p>
+
         <ul>
-            <!-- Cria um item para cada evento recebido do controller. -->
+            <!-- Cria um item para cada evento recebido. -->
             {% for e in eventos %}
                 <li>
                     <strong>{{ e.nome }}</strong>
                     — {{ e.data }}
                     — {{ e.local or 'Local não informado' }}
-                    — Vagas:
-                    {{ e.vagas if e.vagas is not none else 'Não informadas' }}
+                    — Vagas: {{ e.vagas if e.vagas is not none else 'Não informadas' }}
 
-                    <!-- O link leva o ID do evento à rota de edição. -->
-                    <a href="{{ url_for('evento.editar', id=e.id) }}">
-                        Editar
-                    </a>
+                    <!-- As contas autenticadas podem editar. -->
+                    <a href="{{ url_for('evento.editar', id=e.id) }}">Editar</a>
 
-                    <!-- A exclusão envia POST com o ID daquele evento. -->
-                    <form method="post" action="{{ url_for('evento.excluir', id=e.id) }}">
-                        <button type="submit">Excluir</button>
-                    </form>
+                    <!-- Somente admin vê o botão de exclusão. -->
+                    {% if g.usuario.perfil == "admin" %}
+                        <form method="post" action="{{ url_for('evento.excluir', id=e.id) }}">
+
+                            <!-- O token também é obrigatório na exclusão. -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <button type="submit">Excluir</button>
+                        </form>
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>
     {% else %}
         <p>Nenhum evento cadastrado.</p>
     {% endif %}
-</body>
-</html>
+{% endblock %}
+
+{% block scripts %}
+    <!-- Carrega o JavaScript que criaremos nas próximas partes. -->
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}

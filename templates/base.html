@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <!-- Permite exibir corretamente os acentos. -->
+    <meta charset="utf-8">
+
+    <!-- Ajusta a página à largura do celular. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Disponibiliza o token de sessão para o JavaScript. -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Cada página pode definir seu próprio título. -->
+    <title>
+        {% block titulo %}Eventos Acadêmicos{% endblock %}
+    </title>
+
+    <!-- Carrega o CSS da pasta static. -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<!-- Aplica o tema escolhido pelo usuário. -->
+<body class="{{ tema }}">
+    <header>
+        <a href="{{ url_for('evento.index') }}">
+            Eventos Acadêmicos
+        </a>
+
+        <!-- Mostra os dados da conta quando existe alguém autenticado. -->
+        {% if g.usuario %}
+            <p>
+                Olá, {{ g.usuario.nome }}!
+                Perfil {{ g.usuario.perfil }}.
+            </p>
+
+            <p>
+                Visitas da sessão:
+                {{ session.get('visitas', 0) }}.
+
+                Acessos neste processo:
+                {{ acessos }}.
+            </p>
+
+            <!-- Envia o pedido de saída da conta por POST. -->
+            <form method="post" action="{{ url_for('auth.sair') }}">
+                <!-- O servidor confere esse token antes de aceitar o envio. -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <button type="submit">Sair</button>
+            </form>
+        {% endif %}
+
+        <!-- Envia a preferência de tema para ser guardada em cookie. -->
+        <form method="post" action="{{ url_for('trocar_tema') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <button type="submit" name="tema" value="claro">
+                Tema claro
+            </button>
+
+            <button type="submit" name="tema" value="escuro">
+                Tema escuro
+            </button>
+        </form>
+    </header>
+
+    <main>
+        <!-- Lê e consome as mensagens criadas com flash no Python. -->
+        {% for categoria, mensagem in get_flashed_messages(
+            with_categories=true
+        ) %}
+            <p class="{{ categoria }}" role="status">
+                {{ mensagem }}
+            </p>
+        {% endfor %}
+
+        <!-- As outras páginas colocam seu conteúdo neste bloco. -->
+        {% block conteudo %}{% endblock %}
+    </main>
+
+    <!-- As páginas podem acrescentar seus arquivos JavaScript aqui. -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
