@@ -1,0 +1,72 @@
+/* Define a fonte, as cores e a largura da página. */
+body {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 16px;
+    background-color: #faf6ff;
+    color: #24182d;
+}
+
+/* Aplica o tema escolhido e guardado no cookie. */
+body.escuro {
+    background-color: #24182d;
+    color: #ffffff;
+    color-scheme: dark;
+}
+
+/* Faz os links acompanharem a cor do texto. */
+a {
+    color: inherit;
+}
+
+/* Separa o cabeçalho do conteúdo principal. */
+header {
+    border-bottom: 1px solid;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+}
+
+/* Coloca cada identificação de campo em uma linha. */
+label {
+    display: block;
+    margin-top: 12px;
+}
+
+/* Melhora a leitura e o preenchimento dos campos. */
+input {
+    font: inherit;
+    padding: 8px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Define a aparência dos botões. */
+button {
+    font: inherit;
+    padding: 8px 12px;
+    margin: 8px 4px 8px 0;
+    cursor: pointer;
+}
+
+/* Delimita cada evento da lista. */
+li {
+    margin: 16px 0;
+    padding: 12px;
+    border: 1px solid;
+}
+
+/* Destaca mensagens de erro. */
+.erro,
+[role="alert"] {
+    border: 2px solid;
+    padding: 10px;
+}
+
+/* Destaca mensagens de sucesso. */
+.sucesso {
+    border-left: 5px solid;
+    padding: 10px;
+}
