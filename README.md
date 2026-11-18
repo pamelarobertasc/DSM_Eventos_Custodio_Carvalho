@@ -1,363 +1,157 @@
-# DSM_Eventos_Custodio_Carvalho
+# Sistema Web de Gestão de Eventos Acadêmicos
 
-Sistema Web de Gestão de Eventos Acadêmicos
+Projeto da disciplina Desenvolvimento Web II, do curso de
+Desenvolvimento de Software Multiplataforma da Fatec Porto Ferreira.
 
-Projeto Integrador — Desenvolvimento Web II (DW2)
-CST em Desenvolvimento de Software Multiplataforma — Fatec Porto Ferreira
+Professor Vagner dos Santos.
 
 ## Integrantes
 
-- Custódio
-- Carvalho
+- Pâmela Roberta de Souza Custódio
+- Adriana Carla Rodrigues Moura
 
-*(se os nomes completos forem diferentes dos sobrenomes usados no repositório, é só atualizar aqui)*
+## Objetivo
 
-## Como executar o projeto
+Desenvolver um sistema web para gerenciar eventos acadêmicos,
+aplicando arquitetura MVC, persistência com banco de dados e
+versionamento com Git e GitHub.
 
-1. Clone o repositório:
-   ```
-   git clone URL_DO_REPOSITORIO
-   cd nome-do-repositorio
-   ```
+## Tecnologias
 
-2. Crie e ative o ambiente virtual:
-   ```
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-   (no macOS/Linux: `source venv/bin/activate`)
+- Python
+- Flask
+- Flask-SQLAlchemy
+- SQLite
+- HTML e Jinja
+- Git e GitHub
 
-3. Instale as dependências:
-   ```
-   pip install -r requirements.txt
-   ```
+## Como executar no Windows
 
-4. Execute a aplicação:
-   ```
-   python app.py
-   ```
+### 1. Obter o projeto
 
-5. Acesse no navegador: `http://127.0.0.1:5000`
+```powershell
+git clone https://github.com/pamelarobertasc/DSM_Eventos_Custodio_Carvalho.git
+cd DSM_Eventos_Custodio_Carvalho
+```
+
+### 2. Criar o ambiente virtual
+
+```powershell
+py -m venv venv
+```
+
+### 3. Instalar as dependências
+
+```powershell
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+### 4. Iniciar a aplicação
+
+```powershell
+.\venv\Scripts\python.exe app.py
+```
+
+Abra http://127.0.0.1:5000 no navegador.
+
+Para encerrar o servidor, pressione Ctrl+C no terminal.
 
 ## Estrutura do projeto
 
-```
-DSM_Eventos_Custodio_Carvalho/
-├── app.py                        # inicia a aplicação Flask
-├── requirements.txt              # dependências do projeto
-├── .gitignore                    # arquivos que o Git deve ignorar
-├── models/
-│   └── evento.py                 # entidade Evento
-├── controllers/
-│   ├── evento_controller.py      # rotas de listar/cadastrar evento
-│   └── site_controller.py        # rotas gerais do site (ex.: /sobre)
-├── data/
-│   └── memoria.py                # armazenamento em memória (temporário)
-└── templates/
-    └── index.html                # página de listagem e cadastro
-```
+| Caminho | Responsabilidade |
+|---|---|
+| app.py | Inicializa o Flask, registra as rotas e prepara o banco |
+| extensions.py | Disponibiliza a instância compartilhada do SQLAlchemy |
+| controllers/ | Recebe as requisições e coordena as operações |
+| models/ | Define Evento, Participante e Inscricao |
+| dao/ | Concentra o acesso aos dados dos eventos |
+| templates/ | Contém os formulários e a listagem |
+| data/ | Guarda o exemplo anterior de dados em memória |
+| docs/DER.md | Documenta as entidades e seus relacionamentos |
+| requirements.txt | Lista as dependências |
+| .gitignore | Define os arquivos ignorados pelo Git |
 
-## Status atual (Etapa 1)
+## Banco de dados
 
-- [x] Projeto organizado em MVC
-- [x] Rotas de listar e cadastrar eventos (dados em memória, ainda não persistentes)
-- [ ] Persistência em banco de dados (Etapa 2)
+A aplicação utiliza SQLite no arquivo instance/eventos.db.
 
-## Etapa 2 — Persistência com ORM
+Na inicialização, as tabelas ausentes são criadas pelo SQLAlchemy.
+Para o banco antigo de eventos, a aplicação acrescenta a coluna vagas
+caso ela ainda não exista.
 
-Nesta etapa, o projeto passou a utilizar o **Flask-SQLAlchemy** como ORM (Object-Relational Mapping) para realizar a comunicação entre a aplicação Python e o banco de dados SQLite.
+Faça uma cópia do banco antes de atualizar uma instalação existente.
 
-O modelo `Evento` foi convertido para uma classe ORM, permitindo que os objetos Python sejam associados aos registros da tabela no banco de dados.
+O ambiente virtual, os arquivos de cache e o banco local são ignorados
+pelo Git. Cada instalação cria seu próprio ambiente e banco.
 
-### Configuração do banco de dados
+## Modelagem
 
-A aplicação utiliza SQLite como banco de dados e o Flask-SQLAlchemy para realizar o mapeamento objeto-relacional.
+O sistema possui três entidades:
 
-A criação das tabelas é realizada através do comando:
+- Evento, com nome, data, local e quantidade de vagas.
+- Participante, com nome e e-mail único.
+- Inscricao, que associa um participante a um evento.
 
-```python
-db.create_all()
-```
+O mesmo participante pode ter somente uma inscrição por evento.
 
-Os registros são persistidos utilizando:
+Consulte o diagrama e as regras em [docs/DER.md](docs/DER.md).
 
-```python
-db.session.add(evento)
-db.session.commit()
-```
+## Funcionalidades implementadas
 
-### Consultas utilizando ORM
+- Cadastro de eventos.
+- Listagem dos eventos cadastrados.
+- Edição de nome, data, local e vagas.
+- Exclusão de eventos.
+- Validação dos campos no servidor.
+- Persistência dos dados após reiniciar a aplicação.
+- Modelos e relacionamentos de participantes e inscrições.
 
-Foram realizadas consultas utilizando os métodos do SQLAlchemy:
+## Rotas disponíveis
 
-```python
-Evento.query.all()
-```
+| Método | Endereço | Funcionamento |
+|---|---|---|
+| GET | / | Exibe o formulário e a lista de eventos |
+| POST | / | Valida e cadastra um evento |
+| GET | /eventos | Exibe o formulário e a lista de eventos |
+| POST | /eventos | Valida e cadastra um evento |
+| GET | /editar/ID | Exibe o formulário do evento escolhido |
+| POST | /editar/ID | Valida e salva as alterações |
+| POST | /excluir/ID | Exclui o evento escolhido |
+| GET | /sobre | Exibe a identificação do projeto |
 
-Retorna todos os eventos cadastrados.
+Substitua ID pelo identificador do evento.
 
-```python
-Evento.query.get(1)
-```
+Após uma escrita bem-sucedida, a aplicação redireciona para a lista
+com o código HTTP 303.
 
-Busca um evento pelo seu identificador.
+Dados inválidos recebem resposta 400.
+Um evento inexistente nas rotas de edição ou exclusão recebe resposta 404.
 
-```python
-Evento.query.filter_by(local="Lab 3").all()
-```
+## Roteiro de teste manual
 
-Busca os eventos de acordo com o local informado.
+1. Cadastre dois eventos com datas válidas.
+2. Edite o nome e as vagas de um deles.
+3. Exclua o outro evento.
+4. Reinicie o servidor.
+5. Confira se o evento restante mantém as alterações.
+6. Tente cadastrar um evento com quantidade negativa de vagas.
+7. Acesse /editar/999999 e confira a resposta para um ID inexistente.
 
-### Data Access Object (DAO)
+## Escopo atual
 
-Foi criada a classe `EventoDAO` para organizar o acesso aos dados.
+A interface realiza o CRUD de eventos.
 
-O DAO possui os seguintes métodos:
+Participante e Inscricao estão representados nos modelos do banco.
+As telas dessas entidades e a validação do limite de inscrições por
+vagas ainda estão pendentes.
 
-* `salvar(evento)` — adiciona o evento ao banco de dados e confirma a transação.
-* `listar()` — retorna todos os eventos cadastrados.
+Sessões, autenticação, AJAX, API externa e deploy serão desenvolvidos
+nas próximas etapas do projeto.
 
-O fluxo da aplicação passou a ser:
+## SQL direto e ORM
 
-```text
-Controller
-    ↓
-EventoDAO
-    ↓
-SQLAlchemy (ORM)
-    ↓
-SQLite
-```
+No SQL direto, o código escreve comandos como INSERT e SELECT.
+Com o ORM, os registros são representados por objetos Python.
 
-Dessa forma, o Controller não precisa realizar diretamente as operações de persistência no banco de dados.
-
-## SQL direto x ORM
-
-### SQL direto
-
-No acesso tradicional ao banco de dados, a aplicação utiliza comandos SQL diretamente.
-
-Exemplo de inserção:
-
-```sql
-INSERT INTO evento (nome, data, local)
-VALUES ('Workshop ORM', '2026-10-15', 'Lab 2');
-```
-
-Exemplo de consulta:
-
-```sql
-SELECT * FROM evento;
-```
-
-Nesse modelo, o desenvolvedor precisa escrever manualmente os comandos SQL utilizados pela aplicação.
-
-### ORM
-
-Com o ORM, os registros do banco podem ser representados por objetos Python.
-
-Exemplo:
-
-```python
-evento = Evento(
-    nome="Workshop ORM",
-    data="2026-10-15",
-    local="Lab 2"
-)
-```
-
-Depois, o objeto pode ser persistido utilizando:
-
-```python
-db.session.add(evento)
-db.session.commit()
-```
-
-As consultas também podem ser realizadas utilizando os recursos do SQLAlchemy:
-
-```python
-Evento.query.all()
-```
-
-### Comparação
-
-| SQL direto                                    | ORM                                               |
-| --------------------------------------------- | ------------------------------------------------- |
-| Utiliza comandos SQL diretamente              | Utiliza objetos e classes Python                  |
-| O desenvolvedor escreve as consultas SQL      | O SQLAlchemy gera as consultas necessárias        |
-| Maior contato com a linguagem SQL             | Abstrai parte da comunicação com o banco          |
-| Exige conhecimento de SQL nas operações       | Permite trabalhar principalmente com Python       |
-| Pode resultar em mais código SQL na aplicação | Integra o acesso aos dados ao modelo da aplicação |
-
-## Vantagens do ORM
-
-O uso do ORM no projeto proporciona:
-
-* Redução da necessidade de escrever SQL manualmente.
-* Utilização de objetos Python para representar os registros.
-* Maior organização do acesso aos dados.
-* Facilidade de manutenção do código.
-* Separação da lógica de acesso aos dados através do DAO.
-* Integração entre os modelos da aplicação e as tabelas do banco de dados.
-
-## Status atual (Etapa 2)
-
-* [x] Flask-SQLAlchemy instalado
-* [x] `requirements.txt` atualizado
-* [x] Modelo `Evento` convertido para ORM
-* [x] Banco de dados SQLite configurado
-* [x] Tabela criada utilizando `db.create_all()`
-* [x] Persistência de eventos utilizando ORM
-* [x] Consultas com `all()`, `get()` e `filter_by()`
-* [x] `EventoDAO` criado
-* [x] Controller integrado ao `EventoDAO`
-* [x] Comparação entre SQL direto e ORM documentada
-
-## Alterações realizadas — Etapa 2
-
-Nesta etapa, o projeto foi atualizado para utilizar persistência de dados com banco de dados SQLite e mapeamento objeto-relacional (ORM) utilizando Flask-SQLAlchemy.
-
-### 1. Instalação do ORM
-
-Foi adicionada a biblioteca **Flask-SQLAlchemy** ao projeto e o arquivo `requirements.txt` foi atualizado para registrar a nova dependência.
-
-### 2. Conversão da entidade Evento para ORM
-
-A classe `Evento`, anteriormente utilizada apenas como uma classe Python, foi transformada em um modelo ORM.
-
-O modelo passou a utilizar:
-
-* `db.Model`;
-* `db.Column`;
-* chave primária `id`;
-* campos `nome`, `data` e `local`.
-
-### 3. Configuração do banco de dados
-
-Foi criada a configuração do SQLAlchemy na aplicação Flask, utilizando o banco de dados SQLite.
-
-Também foi criado o arquivo `extensions.py`, responsável por disponibilizar a instância do SQLAlchemy:
-
-```python
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
-```
-
-A criação das tabelas é realizada através de:
-
-```python
-with app.app_context():
-    db.create_all()
-```
-
-### 4. Persistência dos eventos
-
-Os eventos passaram a ser armazenados no banco de dados utilizando o ORM.
-
-Para inserir um evento são utilizados:
-
-```python
-db.session.add(evento)
-db.session.commit()
-```
-
-Dessa forma, os dados permanecem armazenados mesmo após o encerramento da aplicação.
-
-### 5. Consultas utilizando ORM
-
-Foram realizados testes de consultas utilizando os recursos do SQLAlchemy:
-
-```python
-Evento.query.all()
-```
-
-Para consultar todos os eventos.
-
-```python
-Evento.query.get(1)
-```
-
-Para consultar um evento pelo seu identificador.
-
-```python
-Evento.query.filter_by(local="Lab 3").all()
-```
-
-Para consultar eventos filtrando pelo local.
-
-### 6. Criação do EventoDAO
-
-Foi criada a pasta `DAO` e o arquivo `evento_dao.py`.
-
-O `EventoDAO` possui os métodos:
-
-```python
-salvar(evento)
-```
-
-Responsável por adicionar e confirmar o evento no banco de dados.
-
-```python
-listar()
-```
-
-Responsável por consultar e retornar os eventos cadastrados.
-
-### 7. Integração do Controller com o DAO
-
-O `evento_controller.py` foi atualizado para utilizar o `EventoDAO`.
-
-O cadastro passou a utilizar:
-
-```python
-EventoDAO.salvar(evento)
-```
-
-E a listagem passou a utilizar:
-
-```python
-eventos = EventoDAO.listar()
-```
-
-Com isso, o Controller deixou de utilizar a lista em memória como fonte principal dos eventos.
-
-O fluxo passou a ser:
-
-```text
-Usuário
-   ↓
-Controller
-   ↓
-EventoDAO
-   ↓
-Flask-SQLAlchemy
-   ↓
-SQLite
-```
-
-### 8. Documentação
-
-O `README.md` foi atualizado para documentar:
-
-* configuração do ORM;
-* persistência dos dados;
-* consultas utilizando SQLAlchemy;
-* funcionamento do DAO;
-* integração entre Controller e DAO;
-* comparação entre SQL direto e ORM.
-
-## Status atual
-
-* [x] Projeto organizado em MVC
-* [x] Flask-SQLAlchemy instalado
-* [x] `requirements.txt` atualizado
-* [x] Modelo `Evento` convertido para ORM
-* [x] Banco SQLite configurado
-* [x] Tabela criada com `db.create_all()`
-* [x] Persistência utilizando ORM
-* [x] Consultas com `all()`, `get()` e `filter_by()`
-* [x] `EventoDAO` criado
-* [x] Controller integrado ao DAO
-* [x] README atualizado
-
+O EventoDAO concentra as operações de banco. O controller chama
+seus métodos para cadastrar, consultar, atualizar e excluir eventos.
