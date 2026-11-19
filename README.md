@@ -278,3 +278,13 @@ e revisão da documentação para a entrega final.
 
 As rotas, os campos, a autenticação e os exemplos de respostas
 estão em [docs/API.md](docs/API.md).
+
+## Aplicação publicada
+
+Acesse: https://pamelacustodio.pythonanywhere.com
+
+Para testar, clique em **Criar conta** e depois faça login.
+
+Novas contas recebem o perfil comum. A exclusão de eventos é restrita ao perfil administrador.
+
+O banco de dados da aplicação publicada é separado do banco utilizado no ambiente local.
