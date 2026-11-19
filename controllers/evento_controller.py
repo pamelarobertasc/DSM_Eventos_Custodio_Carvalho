@@ -51,39 +51,58 @@ def exigir_login():
         )
 
 
-def ler_campos():
-    # Lê os campos enviados e remove espaços das pontas.
-    nome = request.form.get("nome", "").strip()
-    data = request.form.get("data", "").strip()
-    local = request.form.get("local", "").strip()
-    vagas = request.form.get("vagas", "").strip()
+def ler_campos(dados=None):
+    # Quando nenhum dicionário é informado, usa o formulário HTML.
+    if dados is None:
+        dados = request.form
 
-    # Confere o nome obrigatório e o tamanho dos textos.
+    # Lê os campos recebidos.
+    nome = dados.get("nome", "")
+    data = dados.get("data", "")
+    local = dados.get("local", "")
+    vagas = dados.get("vagas", "")
+
+    # Confere os tipos antes de tentar usar os textos.
+    if not all(isinstance(valor, str) for valor in (nome, data, local)):
+        raise ValueError("Nome, data e local devem ser textos.")
+
+    # Remove espaços desnecessários.
+    nome = nome.strip()
+    data = data.strip()
+    local = local.strip()
+
+    # Valida o nome obrigatório e o tamanho dos textos.
     if not nome or len(nome) > 120 or len(local) > 120:
         raise ValueError(
             "Informe o nome e use até 120 caracteres "
             "no nome e no local."
         )
 
-    # Valida a data e padroniza para ano-mês-dia.
+    # Confere se a data existe e usa ano-mês-dia.
     try:
         data = date.fromisoformat(data).isoformat()
     except ValueError:
         raise ValueError("Informe uma data válida.")
 
-    # Campo vazio vira None. Caso preenchido, deve ser inteiro.
-    try:
-        vagas = int(vagas) if vagas else None
-    except ValueError:
+    # Vagas pode chegar como texto do formulário ou inteiro do JSON.
+    # Rejeita números decimais, booleanos, listas e objetos.
+    if vagas is not None and type(vagas) not in (str, int):
         raise ValueError("Vagas deve ser um número inteiro.")
 
-    # Impede quantidade negativa de vagas.
-    if vagas is not None and vagas < 0:
-        raise ValueError(
-            "Vagas deve ser zero ou um número positivo."
-        )
+    # Campo vazio ou nulo representa vagas não informadas.
+    if vagas is None or str(vagas).strip() == "":
+        vagas = None
+    else:
+        try:
+            vagas = int(vagas)
+        except ValueError:
+            raise ValueError("Vagas deve ser um número inteiro.")
 
-    # Entrega os valores validados ao cadastro ou à edição.
+        # Confere o intervalo aceito pelo banco SQLite.
+        if vagas < 0 or vagas > 9223372036854775807:
+            raise ValueError("Informe uma quantidade válida de vagas.")
+
+    # Devolve os campos prontos para criar ou atualizar um evento.
     return {
         "nome": nome,
         "data": data,
@@ -234,3 +253,39 @@ def api_buscar(id):
 
     # Retorna os dados do evento encontrado.
     return jsonify(evento.para_dicionario())
+
+# Recebe um novo evento em JSON.
+@evento_bp.post("/api/eventos")
+def api_cadastrar():
+    # Tenta ler o JSON. Se estiver inválido, recebe None.
+    dados = request.get_json(silent=True)
+
+    # Exige um objeto JSON com campos nomeados.
+    if not isinstance(dados, dict):
+        return jsonify(erro="Envie um objeto JSON válido."), 400
+
+    try:
+        # Reutiliza a validação do cadastro tradicional.
+        campos = ler_campos(dados)
+
+    except ValueError as erro:
+        # Devolve a explicação do problema em JSON.
+        return jsonify(erro=str(erro)), 400
+
+    # Monta o objeto e grava no banco pelo DAO.
+    evento = Evento(**campos)
+    EventoDAO.salvar(evento)
+
+    # Prepara a resposta com os dados do registro criado.
+    resposta = jsonify(evento.para_dicionario())
+
+    # O código 201 informa que um recurso foi criado.
+    resposta.status_code = 201
+
+    # Indica onde consultar o evento recém-criado.
+    resposta.headers["Location"] = url_for(
+        "evento.api_buscar",
+        id=evento.id,
+    )
+
+    return resposta

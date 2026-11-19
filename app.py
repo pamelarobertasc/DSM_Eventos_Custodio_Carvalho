@@ -16,6 +16,7 @@ from flask import (
     request,
     session,
     url_for,
+    jsonify,
 )
 
 # Ferramentas para configurar e atualizar o banco.
@@ -119,6 +120,13 @@ def carregar_usuario_e_proteger_escritas():
             str(recebido),
             esperado,
         ):
+            # A API informa falhas do token em JSON.
+            if request.path.startswith("/api/"):
+                return jsonify(
+                    erro="Sessão expirada. Atualize a página."
+                ), 400
+            
+            # Os formulários tradicionais recebem a página de erro.
             abort(
                 400,
                 description=(
