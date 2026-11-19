@@ -8,6 +8,7 @@ from flask import (
     current_app,
     flash,
     g,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -29,8 +30,13 @@ def exigir_login():
     # g.usuario é preenchido no app.py antes de cada requisição.
     # Se não houver usuário autenticado, abre o login.
     if g.usuario is None:
-        return redirect(url_for("auth.login"))
+        # Pedidos para a API recebem uma resposta JSON.
+        if request.path.startswith("/api/"):
+            return jsonify(erro="Entre na sua conta para acessar a API."), 401
 
+        # Pedidos de páginas continuam abrindo a tela de login.
+        return redirect(url_for("auth.login"))
+    
     # Conta as visitas somente ao abrir a listagem por GET.
     if (
         request.method == "GET"
@@ -202,3 +208,29 @@ def excluir(id):
         url_for("evento.index"),
         code=303,
     )
+
+# GET devolve todos os eventos em JSON.
+@evento_bp.get("/api/eventos")
+def api_listar():
+    # Consulta os objetos do banco.
+    eventos = EventoDAO.listar()
+
+    # Converte cada objeto em dicionário.
+    lista = [evento.para_dicionario() for evento in eventos]
+
+    # Gera a resposta JSON com status 200.
+    return jsonify(lista)
+
+
+# GET devolve somente o evento indicado pelo ID.
+@evento_bp.get("/api/eventos/<int:id>")
+def api_buscar(id):
+    # Procura o registro no banco.
+    evento = EventoDAO.buscar_por_id(id)
+
+    # Retorna uma mensagem JSON se o ID não existir.
+    if evento is None:
+        return jsonify(erro="Evento não encontrado."), 404
+
+    # Retorna os dados do evento encontrado.
+    return jsonify(evento.para_dicionario())
