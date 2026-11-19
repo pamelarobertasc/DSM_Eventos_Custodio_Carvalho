@@ -1,4 +1,4 @@
-<!-- Reutiliza o cabeçalho, o tema e as mensagens da base. -->
+<!-- Reutiliza a estrutura, o tema e as mensagens da base. -->
 {% extends "base.html" %}
 
 {% block titulo %}Eventos Acadêmicos{% endblock %}
@@ -6,32 +6,31 @@
 {% block conteudo %}
     <h1>Eventos Acadêmicos</h1>
 
-    <!-- O JavaScript habilitará este botão. -->
+    <!-- O JavaScript habilita o botão de mostrar e ocultar. -->
     <button type="button" id="alternar" hidden>Mostrar ou ocultar formulário</button>
 
-    <!-- Exibe erros de validação enviados pelo controller. -->
+    <!-- Mostra erros do envio tradicional do formulário. -->
     {% if erro %}
         <p role="alert">{{ erro }}</p>
     {% endif %}
 
-    <!-- Envia os dados para a rota de cadastro. -->
-    <form id="cadastro-evento" method="post" action="{{ url_for('evento.index') }}">
+    <!-- data-api informa ao JavaScript o endereço da API.
+         Os outros data-* guardam os endereços das ações de cada evento.
+         method e action mantêm o cadastro tradicional funcionando. -->
+    <form id="cadastro-evento" method="post" action="{{ url_for('evento.index') }}" data-api="{{ url_for('evento.api_listar') }}" data-editar="{{ url_for('evento.editar', id=0) }}" data-excluir="{{ url_for('evento.excluir', id=0) if g.usuario.perfil == 'admin' else '' }}">
 
-        <!-- O servidor confere o token antes de aceitar o envio. -->
+        <!-- Token usado pelo formulário e pelas ações da lista. -->
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <!-- Mantém o nome digitado caso o cadastro apresente erro. -->
         <label for="nome">Nome do evento</label>
         <input id="nome" name="nome" maxlength="120" value="{{ valores.get('nome', '') }}" required>
 
-        <!-- O navegador envia a data no formato ano-mês-dia. -->
         <label for="data">Data</label>
         <input id="data" name="data" type="date" value="{{ valores.get('data', '') }}" required>
 
         <label for="local">Local</label>
         <input id="local" name="local" maxlength="120" value="{{ valores.get('local', '') }}">
 
-        <!-- Vagas aceita números inteiros a partir de zero. -->
         <label for="vagas">Quantidade de vagas</label>
         <input id="vagas" name="vagas" type="number" min="0" step="1" value="{{ valores.get('vagas', '') }}">
 
@@ -40,41 +39,43 @@
 
     <h2>Eventos cadastrados</h2>
 
-    <!-- Mostra a lista quando existem registros. -->
-    {% if eventos %}
-        <p>Total de eventos: {{ eventos|length }}</p>
+    <!-- O JavaScript habilita a consulta sem recarregar. -->
+    <button type="button" id="atualizar" hidden>Atualizar sem recarregar</button>
 
-        <ul>
-            <!-- Cria um item para cada evento recebido. -->
-            {% for e in eventos %}
-                <li>
-                    <strong>{{ e.nome }}</strong>
-                    — {{ e.data }}
-                    — {{ e.local or 'Local não informado' }}
-                    — Vagas: {{ e.vagas if e.vagas is not none else 'Não informadas' }}
+    <!-- Recebe mensagens de sucesso ou erro do JavaScript. -->
+    <p id="retorno" role="status"></p>
 
-                    <!-- As contas autenticadas podem editar. -->
-                    <a href="{{ url_for('evento.editar', id=e.id) }}">Editar</a>
+    <!-- O JavaScript atualizará somente o conteúdo desta área. -->
+    <div id="resultados">
+        {% if eventos %}
+            <p>Total de eventos: {{ eventos|length }}</p>
 
-                    <!-- Somente admin vê o botão de exclusão. -->
-                    {% if g.usuario.perfil == "admin" %}
-                        <form method="post" action="{{ url_for('evento.excluir', id=e.id) }}">
+            <ul>
+                {% for e in eventos %}
+                    <li>
+                        <strong>{{ e.nome }}</strong>
+                        — {{ e.data }}
+                        — {{ e.local or 'Local não informado' }}
+                        — Vagas: {{ e.vagas if e.vagas is not none else 'Não informadas' }}
 
-                            <!-- O token também é obrigatório na exclusão. -->
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <a href="{{ url_for('evento.editar', id=e.id) }}">Editar</a>
 
-                            <button type="submit">Excluir</button>
-                        </form>
-                    {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Nenhum evento cadastrado.</p>
-    {% endif %}
+                        <!-- A exclusão continua protegida pelo perfil. -->
+                        {% if g.usuario.perfil == "admin" %}
+                            <form method="post" action="{{ url_for('evento.excluir', id=e.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit">Excluir</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Nenhum evento cadastrado.</p>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block scripts %}
-    <!-- Carrega o JavaScript que criaremos nas próximas partes. -->
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock %}
