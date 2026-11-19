@@ -273,3 +273,8 @@ Documentação do serviço: https://viacep.com.br/
 
 Publicação da aplicação, fluxo com branches e pull request,
 e revisão da documentação para a entrega final.
+
+## Documentação da API
+
+As rotas, os campos, a autenticação e os exemplos de respostas
+estão em [docs/API.md](docs/API.md).
