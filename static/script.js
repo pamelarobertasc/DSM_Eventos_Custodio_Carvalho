@@ -203,4 +203,71 @@ if (formulario) {
             botaoCadastrar.disabled = false;
         }
     });
+
+        // Mostra a seção de consulta de CEP.
+    const consultaCep = document.querySelector("#consulta-cep");
+    consultaCep.hidden = false;
+
+    // Localiza os campos e o botão da consulta.
+    const campoCep = document.querySelector("#cep");
+    const buscarCep = document.querySelector("#buscar-cep");
+    const endereco = document.querySelector("#endereco");
+    const campoLocal = document.querySelector("#local");
+
+    // Consulta a API externa quando a pessoa clica no botão.
+    buscarCep.addEventListener("click", async () => {
+
+        // Retira hífen e espaços antes de validar.
+        const cep = campoCep.value.trim().replace(/[-\s]/g, "");
+
+        // Exige exatamente oito números.
+        if (!/^\d{8}$/.test(cep)) {
+            endereco.textContent = "Digite um CEP de oito números.";
+            return;
+        }
+
+        // Evita consultas repetidas enquanto aguarda a resposta.
+        buscarCep.disabled = true;
+        endereco.textContent = "Consultando endereço...";
+
+        try {
+            // Pede os dados ao ViaCEP usando a função já existente.
+            const dados = await requisitar(
+                `https://viacep.com.br/ws/${cep}/json/`
+            );
+
+            // O ViaCEP informa erro quando o CEP não existe.
+            if (dados.erro) {
+                throw new Error("CEP não encontrado.");
+            }
+
+            // Confere os dados necessários para mostrar o endereço.
+            if (!dados.localidade || !dados.uf) {
+                throw new Error("A consulta retornou um endereço incompleto.");
+            }
+
+            // Junta as partes disponíveis do endereço.
+            const textoEndereco = [
+                dados.logradouro,
+                dados.bairro,
+                dados.localidade,
+                dados.uf
+            ].filter(Boolean).join(", ");
+
+            // Exibe o endereço como texto na página.
+            endereco.textContent = textoEndereco;
+
+            // Preenche o local respeitando o limite do campo.
+            // A pessoa pode ajustar esse texto antes de cadastrar.
+            campoLocal.value = textoEndereco.slice(0, 120);
+
+        } catch (erro) {
+            // Mostra erros de CEP, conexão ou resposta do serviço.
+            endereco.textContent = erro.message;
+
+        } finally {
+            // Libera o botão ao terminar a consulta.
+            buscarCep.disabled = false;
+        }
+    });
 }

@@ -37,6 +37,23 @@
         <button type="submit">Cadastrar</button>
     </form>
 
+        <!-- O JavaScript habilitará a consulta à API externa. -->
+    <section id="consulta-cep" hidden>
+        <h2>Consultar endereço do evento</h2>
+
+        <!-- O campo fica fora do formulário de cadastro. -->
+        <label for="cep">CEP do local</label>
+        <input id="cep" type="text" inputmode="numeric" maxlength="9" placeholder="00000-000">
+
+        <!-- Consulta o CEP sem enviar o cadastro do evento. -->
+        <button type="button" id="buscar-cep">Consultar CEP</button>
+
+        <!-- Recebe o endereço encontrado ou uma mensagem de erro. -->
+        <p id="endereco" role="status"></p>
+
+        <p>Fonte dos endereços: ViaCEP.</p>
+    </section>
+
     <h2>Eventos cadastrados</h2>
 
     <!-- O JavaScript habilita a consulta sem recarregar. -->
